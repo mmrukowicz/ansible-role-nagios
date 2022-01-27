@@ -1,0 +1,50 @@
+# Official documentation can me found here: https://support.nagios.com/kb/article/nagios-core-installing-nagios-core-from-source-96.html#CentOS
+---
+
+- name: Disable SELinux
+  ansible.posix.selinux:
+    state: disabled
+
+- name: Install the latest version of prerequisites
+  dnf:
+    name:
+      - gcc 
+      - glibc
+      - glibc-common
+      - perl
+      - httpd
+      - php
+      - wget
+      - gd
+      - gd-devel
+    state: latest
+
+- name: Upgrade all packages
+  dnf:
+    name: "*"
+    state: latest
+
+- name: Download the source
+  get_url:
+    url: https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.6.tar.gz
+    dest: /tmp/nagioscore.tar.gz
+
+- name: Extract nagioscore.tar.gz
+  unarchive:
+    src: /tmp/nagioscore.tar.gz
+    dest: /tmp/nagioscore
+
+- name: Compile
+  shell: ./configure && make all
+  args:
+    chdir: /tmp/nagioscore/
+
+- name: Create users and groups
+  shell: make install-groups-users
+  args:
+    chdir: /tmp/nagioscore/
+  
+- name: Add apache user to nagios group
+  user:
+    name: apache
+    group: nagios
